@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="org.jfree:fxgraphics2d:1.8" type="repository">
+    <properties maven-id="org.jfree:fxgraphics2d:1.8" />
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/fxgraphics2d-1.8.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/lib/fxgraphics2d-1.8-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES />
+  </library>
+</component>

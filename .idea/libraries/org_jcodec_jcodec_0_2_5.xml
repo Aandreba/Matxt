@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="org.jcodec:jcodec:0.2.5" type="repository">
+    <properties maven-id="org.jcodec:jcodec:0.2.5" />
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/jcodec-0.2.5.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/lib/jcodec-0.2.5-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES />
+  </library>
+</component>

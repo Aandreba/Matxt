@@ -1,0 +1,3 @@
+# Project exclude paths
+/out/
+/src/org/matxt/GUI/
