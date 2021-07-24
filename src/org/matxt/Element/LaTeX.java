@@ -2,89 +2,79 @@ package org.matxt.Element;
 
 import org.apache.batik.parser.AWTPathProducer;
 import org.apache.batik.svggen.SVGGraphics2D;
-import org.image2svg.src.main.java.com.fisher.imageToSvg.processor.ImageToSvgGenerator;
-import org.scilab.forge.jlatexmath.TeXConstants;
-import org.scilab.forge.jlatexmath.TeXFormula;
-import org.scilab.forge.jlatexmath.TeXIcon;
+import org.matxt.Extra.Defaults;
+import org.matxt.Extra.Regex;
+import org.mozilla.javascript.ast.ForInLoop;
+import org.w3c.dom.svg.SVGDocument;
 
 import java.awt.*;
-import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
-import java.io.StringReader;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.HashMap;
 
-public class LaTeX extends ElementShape {
-    private String latex;
-    private TeXFormula formula;
-    private float size;
+public class LaTeX extends Element {
+    final private static Runtime runtime = Runtime.getRuntime();
+    final private static File TMP = new File("tmp");
+    final private static File WIN64 = new File("pdf2svg/x64");
 
-    public LaTeX (float x, float y, String latex, float size, boolean doCenter, Color color) {
-        super(x, y, null, false, doCenter, color);
+    public String latex;
+    public int size;
+
+    public LaTeX (float x, float y, String latex, int size, Color color) {
+        super(x, y, color);
         this.latex = latex;
-        this.formula = new TeXFormula(latex);
-        this.size = size;
-
-        try {
-            this.shape = generateShape(this.formula, this.size);
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-    }
-
-    private LaTeX (float x, float y, Shape shape, boolean doFill, boolean doCenter, Color color, String latex, TeXFormula formula, float size) {
-        super(x, y, shape, doFill, doCenter, color);
-        this.latex = latex;
-        this.formula = formula;
         this.size = size;
     }
 
-    public String getLatex () {
-        return latex;
-    }
-
-    public boolean setLatex (String latex) {
-        TeXFormula formula = new TeXFormula(this.latex);
-
-        try {
-            this.shape = generateShape(formula, size);
-            this.latex = latex;
-            this.formula = formula;
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    public TeXFormula getFormula () {
-        return formula;
-    }
-
-    public float getSize() {
-        return size;
-    }
-
-    public boolean setSize (float size) {
-        try {
-            this.shape = generateShape(formula, size);
-            this.size = size;
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+    @Override
+    public void draw(BufferedImage image, Graphics2D graphics, int sceneWidth, int sceneHeight, float halfWidth, float halfHeight) {
+        // TODO
     }
 
     @Override
     public LaTeX clone() {
-        return new LaTeX(x, y, shape, false, doCenter, color, latex, formula, size);
+        return new LaTeX(x, y, latex, size, color);
     }
 
-    private static Shape generateShape (TeXFormula formula, float size) throws Exception {
-        final double scale = 1d / 30;
+    public SVGDocument generateSVG () throws IOException {
+        if (!TMP.exists()) {
+            TMP.mkdir();
+        }
 
-        SVGGraphics2D svg = ImageToSvgGenerator.genSvg((BufferedImage) formula.createBufferedImage(TeXConstants.STYLE_DISPLAY, 30f * size, Color.BLACK, Color.WHITE), new String[]{ "#000000" });
-        String pathStr = svg.getRoot().getElementsByTagName("path").item(0).getAttributes().getNamedItem("d").getNodeValue();
+        String input = "\\documentclass["+size+"pt]{article} % required\n" +
+                "\\pagestyle{empty} % required\n" +
+                "\\usepackage{amsmath}\n" +
+                "\\usepackage{amssymb}\n" +
+                "\\usepackage{color}\n" +
+                "\\usepackage[T1]{fontenc}\n" +
+                "\\begin{document}\n" +
+                "\\definecolor{fgC}{rgb}{0,0,0}\n" +
+                "\\color{fgC}\n" +
+                "\\["+latex+"\\]\n" +
+                "\\end{document}";
 
-        return AffineTransform.getScaleInstance(scale, scale).createTransformedShape(AWTPathProducer.createShape(new StringReader(pathStr), 0));
+        File tex = new File(TMP, "latex.tex");
+        File svg = new File(TMP, "latex.svg");
+
+        Files.write(tex.toPath(), input.getBytes());
+        Process proc = runtime.exec("pdflatex latex.tex -o latex.pdf", new String[0], TMP);
+
+        while (proc.isAlive()) {}
+        proc.destroy();
+
+        if (Defaults.isWindows() && Defaults.is64Bit) {
+            Process proc2 = runtime.exec("pdf2svg/x64/pdf2svg.exe tmp/latex.pdf tmp/latex.svg");
+            while (proc2.isAlive()) {}
+            proc2.destroy();
+        } else if (Defaults.isWindows()) {
+            Process proc2 = runtime.exec("pdf2svg/x32/pdf2svg.exe tmp/latex.pdf tmp/latex.svg");
+            while (proc2.isAlive()) {}
+            proc2.destroy();
+        }
+
+        return Defaults.loadSVG(svg);
     }
 }

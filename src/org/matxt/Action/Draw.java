@@ -1,12 +1,16 @@
 package org.matxt.Action;
 
+import org.jml.Mathx.FourierSeries;
+import org.jml.Vector.Single.Veci;
 import org.matxt.Element.ElementShape;
 import org.matxt.Element.Graph;
 import org.matxt.Extra.Steps;
 
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
 public class Draw {
