@@ -21,6 +21,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -32,18 +33,16 @@ public class LaTeX extends ElementShape {
     final private static File WIN64 = new File("pdf2svg/x64");
 
     private String latex;
-    private float size;
-
     public LaTeX (float x, float y, String latex, float size, boolean doCenter, Color color) {
-        super(x, y, generateShape(latex, size), true, doCenter, color);
+        super(x, y, generateShape(latex), true, doCenter, color);
         this.latex = latex;
-        this.size = size;
+        this.scale = size / 10f;
     }
 
     private LaTeX(float x, float y, Shape shape, boolean doFill, boolean doCenter, Color color, String latex, float size) {
         super(x, y, shape, doFill, doCenter, color);
         this.latex = latex;
-        this.size = size;
+        this.scale = size / 10f;
     }
 
     public String getLatex() {
@@ -51,25 +50,24 @@ public class LaTeX extends ElementShape {
     }
 
     public void setLatex(String latex) {
-        this.shape = generateShape(latex, size);
+        this.shape = generateShape(latex);
         this.latex = latex;
     }
 
-    public float getSize() {
-        return size;
+    public float getSize () {
+        return this.scale * 10f;
     }
 
-    public void setSize(float size) {
-        this.shape = generateShape(latex, size);
-        this.size = size;
+    public void setSize (float size) {
+        this.scale = size / 10f;
     }
 
     @Override
     public LaTeX clone() {
-        return new LaTeX(x, y, shape, doFill, doCenter, color, latex, size);
+        return new LaTeX(x, y, shape, doFill, doCenter, color, latex, scale);
     }
 
-    private static Path2D generateShape(String latex, float size) {
+    private static Path2D generateShape(String latex) {
         if (!TMP.exists()) {
             TMP.mkdir();
         }
@@ -87,25 +85,28 @@ public class LaTeX extends ElementShape {
                 "\\end{document}";
 
         File tex = new File(TMP, "latex.tex");
+        File pdf = new File(TMP, "latex.pdf");
         File svg = new File(TMP, "latex.svg");
 
         try {
             Files.write(tex.toPath(), input.getBytes());
-            Process proc = runtime.exec("pdflatex latex.tex -o latex.pdf", new String[0], TMP);
+            System.out.println("pdflatex "+tex.getPath()+" -o "+pdf.getPath());
 
-            while (proc.isAlive()) {
-            }
+            Process proc = runtime.exec("pdflatex latex.tex -o latex.pdf", new String[0], TMP);
+            while (proc.isAlive()){}
             proc.destroy();
 
             if (Defaults.isWindows() && Defaults.is64Bit) {
                 Process proc2 = runtime.exec("pdf2svg/x64/pdf2svg.exe tmp/latex.pdf tmp/latex.svg");
-                while (proc2.isAlive()) {
-                }
+                while (proc2.isAlive()) {}
                 proc2.destroy();
             } else if (Defaults.isWindows()) {
                 Process proc2 = runtime.exec("pdf2svg/x32/pdf2svg.exe tmp/latex.pdf tmp/latex.svg");
-                while (proc2.isAlive()) {
-                }
+                while (proc2.isAlive()) {}
+                proc2.destroy();
+            } else {
+                Process proc2 = runtime.exec("pdf2svg "+pdf.getPath()+" "+svg.getPath());
+                while (proc2.isAlive()) {}
                 proc2.destroy();
             }
 
@@ -148,10 +149,7 @@ public class LaTeX extends ElementShape {
             }
 
             Rectangle2D bounds = path.getBounds2D();
-            float scale = size;
-
-            AffineTransform transform = AffineTransform.getScaleInstance(scale, scale);
-            transform.translate(-bounds.getX(), -bounds.getY());
+            AffineTransform transform = AffineTransform.getTranslateInstance(-bounds.getX(), -bounds.getY());
 
             path.transform(transform);
             return path;

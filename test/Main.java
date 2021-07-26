@@ -22,7 +22,7 @@ public class Main {
         Video video = new Video(1920, 1080, 5f, 60);
 
         video.add(latex);
-        video.add(Draw.shape(latex, 0, 1));
+        video.add(Draw.shape(latex, video, 0, 1));
 
         video.render(new File("graph.mov"));
     }

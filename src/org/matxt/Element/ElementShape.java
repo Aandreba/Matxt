@@ -16,10 +16,10 @@ import java.io.*;
 import java.nio.file.Files;
 
 public class ElementShape extends Element {
-    public Shape shape;
-    public float scale = 1f;
-    public boolean doFill;
-    public boolean doCenter;
+    protected Shape shape;
+    protected float scale = 1f;
+    protected boolean doFill;
+    protected boolean doCenter;
 
     public ElementShape (float x, float y, Shape shape, boolean doFill, boolean doCenter, Color color) {
         super(x, y, color);
@@ -40,9 +40,24 @@ public class ElementShape extends Element {
         this.doCenter = doCenter;
     }
 
-    @Override
-    public void draw(BufferedImage image, Graphics2D graphics, int sceneWidth, int sceneHeight, float hw, float hh) {
-        AffineTransform transform = AffineTransform.getTranslateInstance(x * hw + hw, -y * hh + hh);
+    public Shape getShape() {
+        return shape;
+    }
+
+    public float getScale() {
+        return scale;
+    }
+
+    public boolean isDoFill() {
+        return doFill;
+    }
+
+    public boolean isDoCenter() {
+        return doCenter;
+    }
+
+    public AffineTransform getTransform () {
+        AffineTransform transform = AffineTransform.getTranslateInstance(x, y);
         transform.scale(scale, scale);
 
         if (doCenter) {
@@ -50,6 +65,12 @@ public class ElementShape extends Element {
             transform.translate(-bounds.getWidth() / 2, bounds.getHeight() / 2);
         }
 
+        return transform;
+    }
+
+    @Override
+    public void draw (BufferedImage image, Graphics2D graphics, int sceneWidth, int sceneHeight, float hw, float hh) {
+        AffineTransform transform = getTransform();
         AffineTransform prev = graphics.getTransform();
         graphics.setTransform(transform);
 
