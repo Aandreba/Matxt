@@ -96,4 +96,8 @@ public class Video {
 
         encoder.finish();
     }
+
+    public void render (File file) throws IOException {
+        render(file, Format.MOV, Codec.PRORES);
+    }
 }

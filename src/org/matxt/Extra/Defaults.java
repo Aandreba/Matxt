@@ -88,41 +88,4 @@ public class Defaults {
         SAXSVGDocumentFactory svgf = new SAXSVGDocumentFactory(parser);
         return (SVGDocument) svgf.createDocument(svg);
     }
-
-    /**
-     * @see <a href="https://takuro.ws/2014/03/18/convert-svg-path-data-to-svg-polygon-data/">Original article</a>
-     */
-    public static Integral.ComplexFunction svgToFunction (SVGDocument svgDoc) {
-        ArrayList<SVGPath> paths = new ArrayList<>();
-        NodeList pathsNode = svgDoc.getElementsByTagName("path");
-
-        for (int i=0;i<pathsNode.getLength();i++) {
-            SVGOMPathElement path = (SVGOMPathElement) pathsNode.item(i);
-            try {
-                paths.add(new SVGPath(path, path.getTotalLength()));
-            } catch (Exception ignore){};
-        }
-
-        int len = paths.size();
-        return (float t) -> {
-            float j = t * len;
-            int n = (int) j;
-
-            SVGPath path = paths.get(n);
-            float _t = path.length * ((len * j) - len * n);
-
-            SVGPoint point = SVGPathSupport.getPointAtLength(path.path, _t);
-            return new Comp(point.getX(), point.getY());
-        };
-    }
-
-    private static class SVGPath {
-        final public SVGOMPathElement path;
-        final public float length;
-
-        public SVGPath(SVGOMPathElement path, float length) {
-            this.path = path;
-            this.length = length;
-        }
-    }
 }
