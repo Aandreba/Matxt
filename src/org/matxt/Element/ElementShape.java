@@ -2,6 +2,7 @@ package org.matxt.Element;
 
 import org.apache.batik.parser.AWTPathProducer;
 import org.apache.batik.parser.PathParser;
+import org.matxt.Extra.Config;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
@@ -18,26 +19,22 @@ import java.nio.file.Files;
 public class ElementShape extends Element {
     protected Shape shape;
     protected float scale = 1f;
+    protected float angle = 0f;
+    protected Stroke stroke = new BasicStroke(1);
     protected boolean doFill;
-    protected boolean doCenter;
 
-    public ElementShape (float x, float y, Shape shape, boolean doFill, boolean doCenter, Color color) {
+    public ElementShape (float x, float y, Shape shape, boolean doFill, Color color) {
         super(x, y, color);
         this.shape = shape;
         this.doFill = doFill;
-        this.doCenter = doCenter;
     }
 
-    public ElementShape (float x, float y, File svg, boolean doFill, boolean doCenter, Color color) throws Exception {
+    public ElementShape (float x, float y, Shape shape, float scale, Stroke stroke, boolean doFill, Color color) {
         super(x, y, color);
-
-        Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(svg);
-        NodeList paths = doc.getElementsByTagName("path");
-        String path = paths.item(0).getAttributes().getNamedItem("d").getNodeValue();
-
-        this.shape = AWTPathProducer.createShape(new StringReader(path), 0);
+        this.shape = shape;
+        this.scale = scale;
+        this.stroke = stroke;
         this.doFill = doFill;
-        this.doCenter = doCenter;
     }
 
     public Shape getShape() {
@@ -48,30 +45,44 @@ public class ElementShape extends Element {
         return scale;
     }
 
+    public float getAngle() {
+        return angle;
+    }
+
+    public void setAngle(float angle) {
+        this.angle = angle;
+    }
+
+    public Stroke getStroke() {
+        return stroke;
+    }
+
     public boolean isDoFill() {
         return doFill;
     }
 
-    public boolean isDoCenter() {
-        return doCenter;
-    }
+    public AffineTransform getTransform (int X, int Y) {
+        Rectangle2D bounds = shape.getBounds2D();
+        double width = bounds.getWidth() * scale;
+        double height = bounds.getHeight() * scale;
 
-    public AffineTransform getTransform () {
-        AffineTransform transform = AffineTransform.getTranslateInstance(x, y);
+        AffineTransform transform = AffineTransform.getTranslateInstance(X - width / 2, Y - height / 2);
+        transform.rotate(angle);
         transform.scale(scale, scale);
-
-        if (doCenter) {
-            Rectangle2D bounds = shape.getBounds2D();
-            transform.translate(-bounds.getWidth() / 2, bounds.getHeight() / 2);
-        }
 
         return transform;
     }
 
+    public AffineTransform getTransform () {
+        return getTransform(Config.normX(x), Config.normY(y));
+    }
+
     @Override
-    public void draw (BufferedImage image, Graphics2D graphics, int sceneWidth, int sceneHeight, float hw, float hh) {
-        AffineTransform transform = getTransform();
+    public void draw (BufferedImage image, Graphics2D graphics, int X, int Y) {
+        AffineTransform transform = getTransform(X, Y);
         AffineTransform prev = graphics.getTransform();
+
+        graphics.setStroke(stroke);
         graphics.setTransform(transform);
 
         if (doFill) {
@@ -85,6 +96,6 @@ public class ElementShape extends Element {
 
     @Override
     public ElementShape clone() {
-        return new ElementShape(x, y, shape, doFill, doCenter, color);
+        return new ElementShape(x, y, shape, doFill, color);
     }
 }

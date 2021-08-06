@@ -5,6 +5,7 @@ import org.apache.batik.anim.dom.SVGOMUseElement;
 import org.apache.batik.ext.awt.geom.ExtendedGeneralPath;
 import org.apache.batik.parser.AWTPathProducer;
 import org.apache.batik.svggen.SVGGraphics2D;
+import org.matxt.Extra.Config;
 import org.matxt.Extra.Defaults;
 import org.matxt.Extra.Regex;
 import org.mozilla.javascript.ast.ForInLoop;
@@ -28,19 +29,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class LaTeX extends ElementShape {
-    final private static Runtime runtime = Runtime.getRuntime();
-    final private static File TMP = new File("tmp");
-    final private static File WIN64 = new File("pdf2svg/x64");
-
     private String latex;
-    public LaTeX (float x, float y, String latex, float size, boolean doCenter, Color color) {
-        super(x, y, generateShape(latex), true, doCenter, color);
+
+    public LaTeX (float x, float y, String latex, float size, Color color) {
+        super(x, y, generateShape(latex), true, color);
         this.latex = latex;
         this.scale = size / 10f;
     }
 
-    private LaTeX(float x, float y, Shape shape, boolean doFill, boolean doCenter, Color color, String latex, float size) {
-        super(x, y, shape, doFill, doCenter, color);
+    private LaTeX(float x, float y, Shape shape, boolean doFill, Color color, String latex, float size) {
+        super(x, y, shape, doFill, color);
         this.latex = latex;
         this.scale = size / 10f;
     }
@@ -64,14 +62,10 @@ public class LaTeX extends ElementShape {
 
     @Override
     public LaTeX clone() {
-        return new LaTeX(x, y, shape, doFill, doCenter, color, latex, scale);
+        return new LaTeX(x, y, shape, doFill, color, latex, scale);
     }
 
     private static Path2D generateShape(String latex) {
-        if (!TMP.exists()) {
-            TMP.mkdir();
-        }
-
         String input = "\\documentclass[10pt]{article} % required\n" +
                 "\\pagestyle{empty} % required\n" +
                 "\\usepackage{amsmath}\n" +
@@ -84,28 +78,26 @@ public class LaTeX extends ElementShape {
                 "\\["+latex+"\\]\n" +
                 "\\end{document}";
 
-        File tex = new File(TMP, "latex.tex");
-        File pdf = new File(TMP, "latex.pdf");
-        File svg = new File(TMP, "latex.svg");
+        File tex = Config.getTemporaryFile("latex.tex");
+        File pdf = Config.getTemporaryFile("latex.pdf");
+        File svg = Config.getTemporaryFile("latex.svg");
 
         try {
             Files.write(tex.toPath(), input.getBytes());
-            System.out.println("pdflatex "+tex.getPath()+" -o "+pdf.getPath());
-
-            Process proc = runtime.exec("pdflatex latex.tex -o latex.pdf", new String[0], TMP);
+            Process proc = Config.RUNTIME.exec("pdflatex latex.tex -o latex.pdf", new String[0], Config.getTempDir());
             while (proc.isAlive()){}
             proc.destroy();
 
             if (Defaults.isWindows() && Defaults.is64Bit) {
-                Process proc2 = runtime.exec("pdf2svg/x64/pdf2svg.exe tmp/latex.pdf tmp/latex.svg");
+                Process proc2 = Config.RUNTIME.exec('"'+Config.getPdf2Svg_x64().getAbsolutePath()+"\" \""+pdf.getAbsolutePath()+"\" \""+svg.getAbsolutePath()+'"');
                 while (proc2.isAlive()) {}
                 proc2.destroy();
             } else if (Defaults.isWindows()) {
-                Process proc2 = runtime.exec("pdf2svg/x32/pdf2svg.exe tmp/latex.pdf tmp/latex.svg");
+                Process proc2 = Config.RUNTIME.exec('"'+Config.getPdf2Svg_x86().getAbsolutePath()+"\" \""+pdf.getAbsolutePath()+"\" \""+svg.getAbsolutePath()+'"');
                 while (proc2.isAlive()) {}
                 proc2.destroy();
             } else {
-                Process proc2 = runtime.exec("pdf2svg "+pdf.getPath()+" "+svg.getPath());
+                Process proc2 = Config.RUNTIME.exec("pdf2svg \""+pdf.getAbsolutePath()+"\" \""+svg.getAbsolutePath()+'"');
                 while (proc2.isAlive()) {}
                 proc2.destroy();
             }

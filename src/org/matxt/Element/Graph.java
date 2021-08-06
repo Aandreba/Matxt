@@ -1,6 +1,8 @@
 package org.matxt.Element;
 
 import org.jml.Calculus.Integral;
+import org.jml.Function.Real.RealFunction;
+import org.matxt.Extra.Config;
 
 import java.awt.*;
 import java.awt.geom.Line2D;
@@ -10,12 +12,12 @@ import java.util.ArrayList;
 public class Graph extends Element {
     public class Plot {
         final public Graph parent;
-        public Integral.RealFunction func;
+        public RealFunction func;
         public Color color;
         BasicStroke stroke;
         public float from, to;
 
-        public Plot (Integral.RealFunction func, Color color, float stroke, float from, float to) {
+        public Plot (RealFunction func, Color color, float stroke, float from, float to) {
             this.parent = Graph.this;
             this.func = func;
             this.color = color;
@@ -64,7 +66,7 @@ public class Graph extends Element {
         this.plots = new ArrayList<>();
     }
 
-    public Plot add (Integral.RealFunction function, Color color, float stroke, float from, float to) {
+    public Plot add (RealFunction function, Color color, float stroke, float from, float to) {
         Plot plot = new Plot(function, color, stroke, from, to);
 
         if (this.plots.add(plot)) {
@@ -74,23 +76,23 @@ public class Graph extends Element {
         return null;
     }
 
-    public Plot add (Integral.RealFunction function, Color color, float stroke) {
+    public Plot add (RealFunction function, Color color, float stroke) {
         return add(function, color, stroke, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY);
     }
 
-    public Plot add (Integral.RealFunction function, Color color) {
+    public Plot add (RealFunction function, Color color) {
         return add(function, color, 1f);
     }
 
     @Override
-    public void draw(BufferedImage image, Graphics2D graphics, int sceneWidth, int sceneHeight, float hh, float hw) {
+    public void draw(BufferedImage image, Graphics2D graphics, int X, int Y) {
         float hheight = height / 2;
         float hwidth = width / 2;
 
-        int top = (int) (-(y + hheight) * hh + hh);
-        int bottom = (int) (-(y - hheight) * hh + hh);
-        int left = (int) ((x - hwidth) * hw + hw);
-        int right = (int) ((x + hwidth) * hw + hw);
+        int top = (int) (-(y + hheight) * Config.getHalfHeight() + Config.getHalfHeight());
+        int bottom = (int) (-(y - hheight) * Config.getHalfHeight() + Config.getHalfHeight());
+        int left = (int) ((x - hwidth) * Config.getHalfWidth() + Config.getHalfWidth());
+        int right = (int) ((x + hwidth) * Config.getHalfWidth() + Config.getHalfWidth());
 
         float dx = toX - fromX;
         float dy = toY - fromY;

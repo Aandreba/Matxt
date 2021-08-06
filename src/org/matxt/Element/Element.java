@@ -1,6 +1,7 @@
 package org.matxt.Element;
 
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
 public abstract class Element {
@@ -22,6 +23,6 @@ public abstract class Element {
         this.isVisible = true;
     }
 
-    public abstract void draw (BufferedImage image, Graphics2D graphics, int sceneWidth, int sceneHeight, float halfWidth, float halfHeight);
+    public abstract void draw (BufferedImage image, Graphics2D graphics, int X, int Y);
     public abstract Element clone ();
 }

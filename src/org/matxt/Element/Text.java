@@ -13,11 +13,14 @@ public class Text extends ElementShape {
     private String text;
     private Font font;
 
-    public Text (float x, float y, String text, Font font, boolean doCenter, Color color) {
-        super(x, y, generateShape(text, font), false, doCenter, color);
+    public Text (float x, float y, String text, Font font, Color color) {
+        super(x, y, generateShape(text, font = font.deriveFont(font.getSize2D() * 3f)), 1, new BasicStroke(2), false, color);
         this.text = text;
         this.font = font;
-        this.doCenter = doCenter;
+    }
+
+    public Text (float x, float y, String text, float size, Color color) {
+        this(x, y, text, DEFAULT.deriveFont(size), color);
     }
 
     public String getText() {
@@ -35,20 +38,17 @@ public class Text extends ElementShape {
 
     public void setFont(Font font) {
         this.font = font;
+        //this.stroke = new BasicStroke(font.getSize2D() / 12f);
         this.shape = generateShape(text, font);
-    }
-
-    public Text (float x, float y, String text, float size, boolean doCenter, Color color) {
-        this(x, y, text, DEFAULT.deriveFont(size), doCenter, color);
     }
 
     @Override
     public Text clone() {
-        return new Text(x, y, text, font, doCenter, color);
+        return new Text(x, y, text, font, color);
     }
 
     private static Shape generateShape (String text, Font font) {
-        FontRenderContext ctx = new FontRenderContext(new AffineTransform(), true, false);
+        FontRenderContext ctx = new FontRenderContext(new AffineTransform(), true, true);
         TextLayout layout = new TextLayout(text, font, ctx);
         return layout.getOutline(null);
     }

@@ -1,52 +1,65 @@
 package org.matxt.Action;
 
-import org.jml.Complex.Single.Comp;
-import org.jml.Function.Complex.ComplexFunction;
-import org.jml.Mathx.FourierSeries;
-import org.jml.Vector.Single.Veci;
+import org.apache.batik.ext.awt.geom.Polygon2D;
+import org.jml.MT.TaskIterator;
 import org.matxt.Element.ElementShape;
-import org.matxt.Element.Graph;
-import org.matxt.Extra.Steps;
+import org.matxt.Element.PixelMatrix;
+import org.matxt.Extra.Defaults;
+import org.matxt.Extra.StepFunction;
 import org.matxt.Video;
 
 import java.awt.*;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Path2D;
-import java.awt.geom.PathIterator;
-import java.awt.geom.Rectangle2D;
-import java.util.ArrayList;
+import java.awt.geom.*;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Draw {
-    public static <T extends ElementShape> Action<T> shape (T shape, Video video, float from, float to) {
-        AffineTransform transform = shape.getTransform();
-        ComplexFunction func = FourierSeries.pathToFunction(shape.getShape().getPathIterator(transform));
+    public static <T extends ElementShape> Action<T> shape (T element, Video video, StepFunction step, float from, float to) {
+        AffineTransform transf = AffineTransform.getScaleInstance(element.getScale(), element.getScale());
+        transf.rotate(element.getAngle());
 
-        final float dt = 0.001f;
-        float lastT = 0;
+        Path2D shape = (Path2D) transf.createTransformedShape(element.getShape());
+        Rectangle2D bounds = shape.getBounds2D();
 
-        Path2D path = new Path2D.Float();
-        ElementShape element = new ElementShape(0, 0, path, false, false, shape.color);
+        int width = (int) bounds.getWidth();
+        int height = (int) bounds.getHeight();
 
-        shape.isVisible = false;
-        video.add(element);
-        return new Action<>(shape, (x,c,t) -> {
+        int pixels = width * height;
+        int beta = pixels * 5;
+        int pixm1 = pixels - 1;
+
+        List<Polygon2D> segments = Defaults.getPolygons(shape, null, beta);
+        PixelMatrix matrix = new PixelMatrix(element.x, element.y, width, height);
+
+        video.add(matrix);
+        element.isVisible = false;
+
+        AtomicInteger lastIndex = new AtomicInteger();
+
+        return new Action<>(element, (x,c,t) -> {
+            float _t = t <= 0 ? 0 : (t >= 1 ? 1 : step.apply(t));
             if (t >= 1) {
-                shape.isVisible = true;
-                element.isVisible = false;
-                return;
+                element.isVisible = true;
+                matrix.isVisible = false;
             }
 
-            for (float i=lastT+dt;i<=t;i+=dt) {
-                Comp val = func.apply(i);
-                path.lineTo(val.re, val.im);
-            }
-        }, from, to);
-    }
+            // FILL
+            int last = lastIndex.get();
+            int index = Math.min((int) (_t * pixels), pixm1);
+            int delta = index - last;
 
-    public static Action<Graph> plot (Graph.Plot plot, float from, float to) {
-        return new Action<>(plot.parent, (x,c,t) -> {
-            plot.from = plot.parent.fromX;
-            plot.to = Steps.smooth(plot.parent.fromX, plot.parent.toX, t);
+            TaskIterator iter = new TaskIterator((int j) -> {
+                int i = j + last;
+                int X = i / height;
+                int Y = i % height;
+
+                if (Defaults.isPointInside(new Point2D.Float(X, Y), segments)) {
+                    matrix.setPixel(X, Y, element.color);
+                }
+            }, (int j) -> j < delta);
+
+            iter.run();
+            lastIndex.set(index);
         }, from, to);
     }
 }

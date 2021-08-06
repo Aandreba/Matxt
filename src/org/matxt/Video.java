@@ -7,29 +7,27 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rational;
 import org.jcodec.scale.AWTUtil;
-import org.jml.Mathx.Mathf;
 import org.matxt.Action.Action;
+import org.matxt.Action.Draw;
 import org.matxt.Element.Element;
-import org.matxt.Extra.Defaults;
+import org.matxt.Element.ElementShape;
+import org.matxt.Extra.Config;
+import org.matxt.Extra.StepFunction;
 
 import java.awt.*;
-import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
 public class Video {
-    public int width, height, framerate;
+    public int framerate;
     public float duration;
-    public Color background = Defaults.BACKGROUND;
 
     private ArrayList<Action> actions;
     private ArrayList<Element> elements;
 
-    public Video(int width, int height, float duration, int framerate) {
-        this.width = width;
-        this.height = height;
+    public Video(float duration, int framerate) {
         this.duration = duration;
         this.framerate = framerate;
 
@@ -43,6 +41,11 @@ public class Video {
 
     public void add (Action action) {
         this.actions.add(action);
+    }
+
+    public <T extends ElementShape> Action<T> draw (T shape, StepFunction step, float from, float to) {
+        Action<T> action = Draw.shape(shape, this, step, from, to);
+        return this.actions.add(action) ? action : null;
     }
 
     public void render (File file, Format format, Codec codec) throws IOException {
@@ -66,26 +69,22 @@ public class Video {
                 }
             }
 
-            BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+            BufferedImage image = new BufferedImage(Config.getWidth(), Config.getHeight(), BufferedImage.TYPE_INT_RGB);
             Graphics2D graphics = image.createGraphics();
 
-            graphics.setBackground(background);
-            graphics.clearRect(0, 0, width, height);
+            graphics.setBackground(Config.getBackground());
+            graphics.clearRect(0, 0, Config.getWidth(), Config.getHeight());
 
-            float hw = width / 2f;
-            float hh = height / 2f;
-            float ar = (float) width / height;
+            /*AffineTransform transf = AffineTransform.getScaleInstance(Config.getAspectRatio(), 1f);
+            transf.translate(0, -Config.getHeight() + Config.getHeight() / Config.getAspectRatio());
+            graphics.setTransform(transf);*/
 
-            AffineTransform transf = AffineTransform.getScaleInstance(ar, 1f);
-            transf.translate(0, -height + height / ar);
-
-            graphics.setTransform(transf);
             graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
             for (Element element: elements) {
                 if (element.isVisible) {
                     graphics.setColor(element.color);
-                    element.draw(image, graphics, width, height, hw, hh);
+                    element.draw(image, graphics, Config.normX(element.x), Config.normY(element.y));
                 }
             }
 

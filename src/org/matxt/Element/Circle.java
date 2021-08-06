@@ -1,6 +1,9 @@
 package org.matxt.Element;
 
+import org.matxt.Extra.Config;
+
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
 public class Circle extends Element {
@@ -12,14 +15,11 @@ public class Circle extends Element {
     }
 
     @Override
-    public void draw(BufferedImage image, Graphics2D graphics, int sceneWidth, int sceneHeight, float hw, float hh) {
-        int R = Math.round(radius * Math.min(sceneWidth, sceneHeight));
+    public void draw (BufferedImage image, Graphics2D graphics, int X, int Y) {
+        int R = Math.round(radius * Math.min(Config.getWidth(), Config.getHeight()));
         int hr = R / 2;
 
-        int X = Math.round(x * hw + hw) - hr;
-        int Y = Math.round(-y * hh + hh) - hr;
-
-        graphics.fillOval(X, Y, R, R);
+        graphics.fillOval(X - hr, Y - hr, R, R);
     }
 
     @Override

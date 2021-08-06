@@ -1,41 +1,31 @@
 package org.matxt.Element;
 
-import java.awt.*;
+import org.apache.batik.ext.awt.geom.Polygon2D;
+import org.matxt.Extra.Config;
 
-public class Rect extends Polygon {
-    private float width, height;
+import java.awt.*;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+
+public class Rect extends Element {
+    public float width, height;
 
     public Rect(float x, float y, float width, float height, Color color) {
-        super(x, y, 4, color);
-        setWidth(width);
-        setHeight(height);
-    }
-
-    public float getWidth () {
-        return width;
-    }
-
-    public void setWidth (float width) {
-        float half = width / 2;
+        super(x, y, color);
         this.width = width;
-
-        xPoints[0] = half;
-        xPoints[1] = half;
-        xPoints[2] = -half;
-        xPoints[3] = -half;
-    }
-
-    public float getHeight() {
-        return height;
-    }
-
-    public void setHeight(float height) {
-        float half = height / 2;
         this.height = height;
+    }
 
-        yPoints[0] = half;
-        yPoints[1] = -half;
-        yPoints[2] = -half;
-        yPoints[3] = half;
+    @Override
+    public void draw (BufferedImage image, Graphics2D graphics, int X, int Y) {
+        int W = Config.normX(width);
+        int H = (int) (y * Config.getHalfHeight() + Config.getHalfHeight());
+
+        graphics.fillRect(X, Y, W, H);
+    }
+
+    @Override
+    public Rect clone() {
+        return new Rect(x, y, width, height, color);
     }
 }
