@@ -1,3 +1,2 @@
-Prerequisites
-    - LaTeX
-    - pdf2svg
+# Matxt
+Manim-inspired Java mathematical animation engine 
