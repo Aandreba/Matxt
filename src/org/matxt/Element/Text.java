@@ -4,9 +4,8 @@ import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
-import java.awt.image.BufferedImage;
 
-public class Text extends ElementShape {
+public class Text extends Body {
     final public static Font[] FONTS = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
     final public static Font DEFAULT = FONTS[0];
 
@@ -14,7 +13,7 @@ public class Text extends ElementShape {
     private Font font;
 
     public Text (float x, float y, String text, Font font, Color color) {
-        super(x, y, generateShape(text, font = font.deriveFont(font.getSize2D() * 3f)), 1, new BasicStroke(2), false, color);
+        super(x, y, generateShape(text, font = font.deriveFont(font.getSize2D() * 3f)), 1, 0, new BasicStroke(2), false, color);
         this.text = text;
         this.font = font;
     }

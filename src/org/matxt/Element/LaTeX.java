@@ -1,14 +1,13 @@
 package org.matxt.Element;
 
 import org.apache.batik.anim.dom.SVGOMPathElement;
+import org.apache.batik.anim.dom.SVGOMSymbolElement;
 import org.apache.batik.anim.dom.SVGOMUseElement;
-import org.apache.batik.ext.awt.geom.ExtendedGeneralPath;
 import org.apache.batik.parser.AWTPathProducer;
-import org.apache.batik.svggen.SVGGraphics2D;
 import org.matxt.Extra.Config;
 import org.matxt.Extra.Defaults;
 import org.matxt.Extra.Regex;
-import org.mozilla.javascript.ast.ForInLoop;
+import org.matxt.Extra.ShapeUtils;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -19,37 +18,53 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.StringReader;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
-public class LaTeX extends ElementShape {
+public class LaTeX extends Body {
     private String latex;
+    private Align align;
 
     public LaTeX (float x, float y, String latex, float size, Color color) {
-        super(x, y, generateShape(latex), true, color);
+        super(x, y, generateShape(latex, Align.Display), true, color);
+        this.align = Align.Display;
         this.latex = latex;
         this.scale = size / 10f;
     }
 
-    private LaTeX(float x, float y, Shape shape, boolean doFill, Color color, String latex, float size) {
-        super(x, y, shape, doFill, color);
+    public LaTeX (float x, float y, String latex, Align align, float size, Color color) {
+        super(x, y, generateShape(latex, align), true, color);
         this.latex = latex;
+        this.align = align;
         this.scale = size / 10f;
+    }
+
+    private LaTeX(float x, float y, Color color, boolean isVisible, Shape shape, ArrayList<ShapeUtils.Segment> segments, float scale, float angle, Stroke stroke, boolean doFill, String latex, Align align) {
+        super(x, y, color, isVisible, shape, segments, scale, angle, stroke, doFill);
+        this.latex = latex;
+        this.align = align;
     }
 
     public String getLatex() {
-        return latex;
+        return String.join("", latex);
     }
 
-    public void setLatex(String latex) {
-        this.shape = generateShape(latex);
+    public void setLatex (String latex) {
+        this.shape = generateShape(latex, align);
         this.latex = latex;
+    }
+
+    public Align getAlign() {
+        return align;
+    }
+
+    public void setAlign(Align align) {
+        this.shape = generateShape(latex, align);
+        this.align = align;
     }
 
     public float getSize () {
@@ -62,10 +77,16 @@ public class LaTeX extends ElementShape {
 
     @Override
     public LaTeX clone() {
-        return new LaTeX(x, y, shape, doFill, color, latex, scale);
+        return new LaTeX(x, y, color, isVisible, new Path2D.Float(shape), getSegments(), getScale(), getAngle(), getStroke(), doFill, latex, align);
     }
 
-    private static Path2D generateShape(String latex) {
+    public static Path2D generateShape (String latex) {
+        return generateShape(latex, Align.Display);
+    }
+
+    public static Path2D generateShape (String latex, Align align) {
+        System.out.println("Loading LaTeX script");
+
         String input = "\\documentclass[10pt]{article} % required\n" +
                 "\\pagestyle{empty} % required\n" +
                 "\\usepackage{amsmath}\n" +
@@ -75,7 +96,7 @@ public class LaTeX extends ElementShape {
                 "\\begin{document}\n" +
                 "\\definecolor{fgC}{rgb}{0,0,0}\n" +
                 "\\color{fgC}\n" +
-                "\\["+latex+"\\]\n" +
+                align.start + latex + align.end +
                 "\\end{document}";
 
         File tex = Config.getTemporaryFile("latex.tex");
@@ -103,17 +124,61 @@ public class LaTeX extends ElementShape {
             }
 
             SVGDocument doc = Defaults.loadSVG(svg);
-            NodeList nodes = doc.getElementsByTagName("path");
+            Path2D path = new Path2D.Float();
 
+            NodeList nodes = doc.getElementsByTagName("path");
             HashMap<String, Shape> symbols = new HashMap<>();
+
             for (int i = 0; i < nodes.getLength(); i++) {
                 SVGOMPathElement node = (SVGOMPathElement) nodes.item(i);
-                String path = node.getAttribute("d");
+                String spath = node.getAttribute("d");
+                Shape shape = AWTPathProducer.createShape(new StringReader(spath), 1);
 
-                symbols.put(node.getParentNode().getAttributes().getNamedItem("id").getNodeValue(), AWTPathProducer.createShape(new StringReader(path), 1));
+                Node parent = node.getParentNode();
+                if (!(parent instanceof SVGOMSymbolElement)) {
+                    Float[] nums = Regex.matches(node.getAttribute("transform"), "\\d+(\\.\\d+){0,1}").stream().map(Float::valueOf).toArray(Float[]::new);
+                    AffineTransform transform = new AffineTransform(nums[0], nums[1], nums[2], nums[3], nums[4], nums[5]);
+
+                    String[] styleList = node.getAttribute("style").split(";");
+                    HashMap<String, String> styles = new HashMap<>(){{
+                        for (String style: styleList) {
+                            String[] split = style.split(":");
+                            put(split[0], split[1]);
+                        }
+                    }};
+
+                    if (Arrays.stream(styleList).anyMatch(x -> x.startsWith("stroke"))) {
+                        String widthStr = styles.get("stroke-width");
+                        String capStr = styles.get("stroke-linecap");
+                        String joinStr = styles.get("stroke-linejoin");
+                        String miterlimitStr = styles.get("stroke-miterlimit");
+
+                        float width = widthStr == null ? 1f : Float.parseFloat(widthStr);
+                        float miterlimit = miterlimitStr == null ? 10f : Float.parseFloat(miterlimitStr);
+
+                        int cap = capStr == null ? BasicStroke.CAP_SQUARE : switch (capStr.toLowerCase()) {
+                            case "round" -> BasicStroke.CAP_ROUND;
+                            case "butt" -> BasicStroke.CAP_BUTT;
+                            default -> BasicStroke.CAP_SQUARE;
+                        };
+
+                        int join = joinStr == null ? BasicStroke.JOIN_MITER : switch (joinStr.toLowerCase()) {
+                            case "round" -> BasicStroke.JOIN_ROUND;
+                            case "bevel" -> BasicStroke.JOIN_BEVEL;
+                            default -> BasicStroke.JOIN_MITER;
+                        };
+
+                        BasicStroke stroke = new BasicStroke(width, cap, join, miterlimit);
+                        shape = stroke.createStrokedShape(shape);
+                    }
+
+                    path.append(transform.createTransformedShape(shape), false);
+                    continue;
+                }
+
+                symbols.put(parent.getAttributes().getNamedItem("id").getNodeValue(), shape);
             }
 
-            Path2D path = new Path2D.Float();
             NodeList usages = doc.getElementsByTagName("use");
             for (int i = 0; i < usages.getLength(); i++) {
                 SVGOMUseElement use = (SVGOMUseElement) usages.item(i);
@@ -144,6 +209,7 @@ public class LaTeX extends ElementShape {
             AffineTransform transform = AffineTransform.getTranslateInstance(-bounds.getX(), -bounds.getY());
 
             path.transform(transform);
+            System.out.println("Script Loaded! \n");
             return path;
         } catch (Exception e) {
             e.printStackTrace();
@@ -151,5 +217,16 @@ public class LaTeX extends ElementShape {
         }
 
         return null;
+    }
+
+    public enum Align {
+        Display ("\\[", "\\]\n"),
+        Align("\\begin{align*}", "\\end{align*}");
+
+        final public String start, end;
+        Align (String start, String end) {
+            this.start = start;
+            this.end = end;
+        }
     }
 }

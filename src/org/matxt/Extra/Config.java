@@ -13,6 +13,8 @@ public class Config {
     private static File WIN_PDF2SVG_64 = null;
 
     private static Color BACKGROUND = new Color(25, 27, 41);
+    private static float DURATION = 1f;
+    private static int FRAMERATE = 30;
 
     private static int WIDTH = 1920;
     private static int HEIGHT = 1080;
@@ -36,9 +38,9 @@ public class Config {
 
     public static void setTempDir (File tmp) throws IOException {
         if (!tmp.exists() && !tmp.mkdir()) {
-            throw new IOException("Error creating directory \""+tmp+"\"");
+            throw new MatxtConfigError("Error creating directory \""+tmp+"\"");
         } else if (tmp.exists() && !tmp.isDirectory()) {
-            throw new IOException("File provided isn't directory");
+            throw new MatxtConfigError("File provided isn't directory");
         }
 
         Config.TMP = tmp;
@@ -63,7 +65,7 @@ public class Config {
 
     public static void setPdf2Svg_x86 (File file) throws IOException {
         if (!Defaults.isWindowsExe(file)) {
-            throw new IOException("File provided isn't a Windows executable");
+            throw new MatxtConfigError("File provided isn't a Windows executable");
         }
 
         WIN_PDF2SVG_32 = file;
@@ -75,7 +77,7 @@ public class Config {
 
     public static void setPdf2Svg_x64 (File file) throws IOException {
         if (!Defaults.isWindowsExe(file)) {
-            throw new IOException("File provided isn't a Windows executable");
+            throw new MatxtConfigError("File provided isn't a Windows executable");
         }
 
         WIN_PDF2SVG_64 = file;
@@ -89,11 +91,39 @@ public class Config {
         Config.BACKGROUND = background;
     }
 
+    public static float getDuration () {
+        return DURATION;
+    }
+
+    public static void setDuration (float seconds) {
+        if (seconds <= 0) {
+            throw new MatxtConfigError("Video duration must be greater than zero seconds");
+        }
+
+        Config.DURATION = seconds;
+    }
+
+    public static int getFramerate() {
+        return FRAMERATE;
+    }
+
+    public static void setFramerate (int framerate) {
+        if (framerate < 1) {
+            throw new MatxtConfigError("Framerate must be greater or equal to one");
+        }
+
+        Config.FRAMERATE = framerate;
+    }
+
     public static int getWidth () {
         return WIDTH;
     }
 
     public static void setWidth (int width) {
+        if (width < 1) {
+            throw new MatxtConfigError("Width must be greater or equal to one");
+        }
+
         Config.WIDTH = width;
         Config.HALF_WIDTH = width / 2f;
         Config.ASPECT_RATIO = (float) WIDTH / HEIGHT;
@@ -104,6 +134,10 @@ public class Config {
     }
 
     public static void setHeight (int height) {
+        if (height < 1) {
+            throw new MatxtConfigError("Height must bre greater or equal to one");
+        }
+
         Config.HEIGHT = height;
         Config.HALF_HEIGHT = height / 2f;
         Config.ASPECT_RATIO = (float) WIDTH / HEIGHT;
@@ -127,5 +161,13 @@ public class Config {
 
     public static int normY (float y) {
         return (int) (-y * HALF_HEIGHT + HALF_HEIGHT);
+    }
+
+    public static float relTime (float seconds) { return seconds / DURATION; }
+
+    public static class MatxtConfigError extends RuntimeException {
+        public MatxtConfigError(String message) {
+            super(message);
+        }
     }
 }

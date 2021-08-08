@@ -23,6 +23,10 @@ public class Image extends ArrayList<Element> {
         Graphics2D graphics = image.createGraphics();
 
         for (Element element: this) {
+            if (!element.isVisible) {
+                continue;
+            }
+
             element.draw(image, graphics, Config.normX(element.x), Config.normY(element.y));
         }
 

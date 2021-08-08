@@ -10,7 +10,7 @@ import org.jcodec.scale.AWTUtil;
 import org.matxt.Action.Action;
 import org.matxt.Action.Draw;
 import org.matxt.Element.Element;
-import org.matxt.Element.ElementShape;
+import org.matxt.Element.Body;
 import org.matxt.Extra.Config;
 import org.matxt.Extra.StepFunction;
 
@@ -19,18 +19,14 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 public class Video {
-    public int framerate;
-    public float duration;
-
     private ArrayList<Action> actions;
     private ArrayList<Element> elements;
 
-    public Video(float duration, int framerate) {
-        this.duration = duration;
-        this.framerate = framerate;
-
+    public Video () {
         this.actions = new ArrayList<>();
         this.elements = new ArrayList<>();
     }
@@ -43,12 +39,28 @@ public class Video {
         this.actions.add(action);
     }
 
-    public <T extends ElementShape> Action<T> draw (T shape, StepFunction step, float from, float to) {
-        Action<T> action = Draw.shape(shape, this, step, from, to);
+    public void addAll (Element... elements) {
+        Collections.addAll(this.elements, elements);
+    }
+
+    public void addAll (Action... actions) {
+        Collections.addAll(this.actions, actions);
+    }
+
+    public <T extends Body> Action<T> outline (T shape, StepFunction step, float from, float to) {
+        Action<T> action = Draw.outline(shape, this, step, from, to);
+        return this.actions.add(action) ? action : null;
+    }
+
+    public <T extends Body> Action<T> draw (T shape, StepFunction step, float from, float to) {
+        Action<T> action = Draw.fill(shape, this, step, from, to);
         return this.actions.add(action) ? action : null;
     }
 
     public void render (File file, Format format, Codec codec) throws IOException {
+        float duration = Config.getDuration();
+        int framerate = Config.getFramerate();
+
         float[] deltas = new float[actions.size()];
         for (int i=0;i<deltas.length;i++) {
             Action action = actions.get(i);
