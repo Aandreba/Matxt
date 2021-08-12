@@ -5,23 +5,18 @@ import org.jml.Complex.Single.Comp;
 import org.jml.Function.Complex.ComplexFunction;
 import org.jml.MT.TaskIterator;
 import org.jml.Mathx.FourierSeries;
-import org.jml.Mathx.Mathf;
 import org.matxt.Element.Body;
 import org.matxt.Element.PixelMatrix;
-import org.matxt.Extra.Defaults;
-import org.matxt.Extra.ShapeUtils;
+import org.matxt.Extra.Utils.ShapeUtils;
 import org.matxt.Extra.StepFunction;
 import org.matxt.Video;
 
 import java.awt.*;
 import java.awt.geom.*;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class Draw {
     public static <T extends Body> Action<T> outline (T element, Video video, StepFunction step, float from, float to) {

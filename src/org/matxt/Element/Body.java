@@ -1,7 +1,8 @@
 package org.matxt.Element;
 
 import org.matxt.Extra.Config;
-import org.matxt.Extra.ShapeUtils;
+import org.matxt.Extra.Utils.Segment;
+import org.matxt.Extra.Utils.ShapeUtils;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
@@ -12,7 +13,7 @@ import java.util.ArrayList;
 
 public class Body extends Element {
     protected Shape shape;
-    private ArrayList<ShapeUtils.Segment> segments;
+    private ArrayList<Segment> segments;
 
     protected float scale = 1f;
     protected float angle = 0f;
@@ -34,7 +35,7 @@ public class Body extends Element {
         this.doFill = doFill;
     }
 
-    protected Body(float x, float y, Color color, boolean isVisible, Shape shape, ArrayList<ShapeUtils.Segment> segments, float scale, float angle, Stroke stroke, boolean doFill) {
+    protected Body(float x, float y, Color color, boolean isVisible, Shape shape, ArrayList<Segment> segments, float scale, float angle, Stroke stroke, boolean doFill) {
         super(x, y, color, isVisible);
         this.shape = shape;
         this.segments = segments;
@@ -53,21 +54,21 @@ public class Body extends Element {
         this.segments = ShapeUtils.getSegments(shape, null);
     }
 
-    public ArrayList<ShapeUtils.Segment> getSegments() {
-        return (ArrayList< ShapeUtils.Segment>) segments.clone();
+    public ArrayList<Segment> getSegments() {
+        return (ArrayList<Segment>) segments.clone();
     }
 
-    public void setSegments (ArrayList<ShapeUtils.Segment> segments) {
+    public void setSegments (ArrayList<Segment> segments) {
         this.segments = segments;
         this.shape = ShapeUtils.toShape(this.segments);
     }
 
-    public void setSegment (int index, ShapeUtils.Segment segment) {
+    public void setSegment (int index, Segment segment) {
         this.segments.set(index, segment);
         this.shape = ShapeUtils.toShape(this.segments);
     }
 
-    public void addSegment (ShapeUtils.Segment segment) {
+    public void addSegment (Segment segment) {
         this.segments.add(segment);
         this.shape = ShapeUtils.toShape(this.segments);
     }

@@ -37,24 +37,20 @@ public class Config {
     }
 
     public static void setTempDir (File tmp) throws IOException {
-        if (!tmp.exists() && !tmp.mkdir()) {
-            throw new MatxtConfigError("Error creating directory \""+tmp+"\"");
+        if (!tmp.exists()) {
+            if (!tmp.mkdirs()) {
+                throw new MatxtConfigError("Error creating directory \"" + tmp + "\"");
+            }
         } else if (tmp.exists() && !tmp.isDirectory()) {
             throw new MatxtConfigError("File provided isn't directory");
         }
 
         Config.TMP = tmp;
-
-        for (File file: tmp.listFiles()) {
-            file.deleteOnExit();
-        }
-
-        tmp.deleteOnExit();
     }
 
     public static File getTemporaryFile (String path) {
         File file = new File(TMP, path);
-        file.deleteOnExit();
+        //file.deleteOnExit();
 
         return file;
     }

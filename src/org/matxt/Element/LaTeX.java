@@ -7,7 +7,8 @@ import org.apache.batik.parser.AWTPathProducer;
 import org.matxt.Extra.Config;
 import org.matxt.Extra.Defaults;
 import org.matxt.Extra.Regex;
-import org.matxt.Extra.ShapeUtils;
+import org.matxt.Extra.Utils.Segment;
+import org.matxt.Extra.Utils.ShapeUtils;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -43,14 +44,14 @@ public class LaTeX extends Body {
         this.scale = size / 10f;
     }
 
-    private LaTeX(float x, float y, Color color, boolean isVisible, Shape shape, ArrayList<ShapeUtils.Segment> segments, float scale, float angle, Stroke stroke, boolean doFill, String latex, Align align) {
+    private LaTeX(float x, float y, Color color, boolean isVisible, Shape shape, ArrayList<Segment> segments, float scale, float angle, Stroke stroke, boolean doFill, String latex, Align align) {
         super(x, y, color, isVisible, shape, segments, scale, angle, stroke, doFill);
         this.latex = latex;
         this.align = align;
     }
 
     public String getLatex() {
-        return String.join("", latex);
+        return latex;
     }
 
     public void setLatex (String latex) {
@@ -104,9 +105,13 @@ public class LaTeX extends Body {
         File svg = Config.getTemporaryFile("latex.svg");
 
         try {
-            Files.write(tex.toPath(), input.getBytes());
+            Files.write(tex.toPath(), input.getBytes()); // TODO FIX FOR MAC
             Process proc = Config.RUNTIME.exec("pdflatex latex.tex -o latex.pdf", new String[0], Config.getTempDir());
-            while (proc.isAlive()){}
+            //while (proc.isAlive()){}
+
+            System.out.println(new String(proc.getErrorStream().readAllBytes()));
+            System.out.println(new String(proc.getInputStream().readAllBytes()));
+
             proc.destroy();
 
             if (Defaults.isWindows() && Defaults.is64Bit) {

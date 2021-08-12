@@ -46,9 +46,13 @@ public class Text extends Body {
         return new Text(x, y, text, font, color);
     }
 
-    private static Shape generateShape (String text, Font font) {
+    public static Shape generateShape (String text, Font font) {
         FontRenderContext ctx = new FontRenderContext(new AffineTransform(), true, true);
         TextLayout layout = new TextLayout(text, font, ctx);
         return layout.getOutline(null);
+    }
+
+    public static Shape generateShape (String text, float fontSize) {
+        return generateShape(text, DEFAULT.deriveFont(fontSize * 3f));
     }
 }

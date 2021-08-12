@@ -1,10 +1,12 @@
 package org.matxt.Action;
 
+import org.jml.Complex.Single.Comp;
 import org.matxt.Element.Element;
 import org.matxt.Element.Body;
-import org.matxt.Extra.ShapeUtils;
+import org.matxt.Extra.Utils.Path;
+import org.matxt.Extra.Utils.Segment;
+import org.matxt.Extra.Utils.ShapeUtils;
 import org.matxt.Extra.StepFunction;
-import org.matxt.Video;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -24,14 +26,32 @@ public class Transform {
         }, from, to);
     }
 
-    public static <T extends Body> Action<T> replace (T element, ArrayList<ShapeUtils.Segment> target, StepFunction step, float from, float to) {
+    public static <T extends Body> Action<T> replace (T element, ArrayList<Segment> target, StepFunction step, float from, float to) {
+        ArrayList<Segment> origin = element.getSegments();
+        ArrayList<Segment> end = (ArrayList<Segment>) target.clone();
+
+        int delta = origin.size() - end.size();
+        if (delta > 0) {
+            for (int i=0;i<delta;i++) {
+                Segment.Builder builder = new Segment.Builder(new Comp(0, 0));
+                builder.add(new Path(1, 0, 0));
+                end.add(builder.build());
+            }
+        } else if (delta < 0) {
+            for (int i=0;i<-delta;i++) {
+                Segment.Builder builder = new Segment.Builder(new Comp(0, 0));
+                builder.add(new Path(1, 0, 0));
+                origin.add(builder.build());
+            }
+        }
+
         return new Action<>(element, (x,c,t) -> {
             float pct = step.apply(t);
             if (pct >= 1) {
                 x.setSegments(target);
             }
 
-            ArrayList<ShapeUtils.Segment> segments = ShapeUtils.trans(c.getSegments(), target, pct);
+            ArrayList<Segment> segments = ShapeUtils.trans(origin, end, pct);
             x.setSegments(segments);
         }, from, to);
     }
