@@ -106,12 +106,9 @@ public class LaTeX extends Body {
 
         try {
             Files.write(tex.toPath(), input.getBytes()); // TODO FIX FOR MAC
-            Process proc = Config.RUNTIME.exec("pdflatex latex.tex -o latex.pdf", new String[0], Config.getTempDir());
-            //while (proc.isAlive()){}
+            Process proc = Config.RUNTIME.exec("pdflatex latex.tex -o latex.pdf", null, Config.getTempDir());
 
-            System.out.println(new String(proc.getErrorStream().readAllBytes()));
-            System.out.println(new String(proc.getInputStream().readAllBytes()));
-
+            while (proc.isAlive()){}
             proc.destroy();
 
             if (Defaults.isWindows() && Defaults.is64Bit) {
@@ -123,7 +120,7 @@ public class LaTeX extends Body {
                 while (proc2.isAlive()) {}
                 proc2.destroy();
             } else {
-                Process proc2 = Config.RUNTIME.exec("pdf2svg \""+pdf.getAbsolutePath()+"\" \""+svg.getAbsolutePath()+'"');
+                Process proc2 = Config.RUNTIME.exec("pdf2svg latex.pdf latex.svg", null, Config.getTempDir());
                 while (proc2.isAlive()) {}
                 proc2.destroy();
             }

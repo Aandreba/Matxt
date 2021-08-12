@@ -1,6 +1,7 @@
 package org.matxt.Action;
 
 import org.jml.Complex.Single.Comp;
+import org.jml.Mathx.Rand;
 import org.matxt.Element.Element;
 import org.matxt.Element.Body;
 import org.matxt.Extra.Utils.Path;
@@ -42,6 +43,19 @@ public class Transform {
                 Segment.Builder builder = new Segment.Builder(new Comp(0, 0));
                 builder.add(new Path(1, 0, 0));
                 origin.add(builder.build());
+            }
+        }
+
+        for (int i=0;i<origin.size();i++) {
+            Segment one = origin.get(i);
+            Segment two = end.get(i);
+
+            while (one.size() > two.size()) {
+                two.split(Rand.getInt(1, two.size() - 2));
+            }
+
+            while (two.size() > one.size()) {
+                one.split(Rand.getInt(1, one.size() - 2));
             }
         }
 

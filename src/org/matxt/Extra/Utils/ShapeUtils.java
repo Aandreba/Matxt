@@ -193,8 +193,7 @@ public class ShapeUtils {
             }
 
             default -> {
-                alpha = null;
-                beta = null;
+                throw new MatxtShapeException("Tried to split unsplitable path: "+a);
             }
         };
 
@@ -318,41 +317,6 @@ public class ShapeUtils {
     public static Segment trans (Segment first, Segment second, float pct, float _pct) {
         Segment segment = new Segment();
         Vec current = new Vec(2);
-
-        int delta = first.size() - second.size();
-        if (delta > 0) {
-            Segment.Builder builder = new Segment.Builder(second.getInitPos());
-            for (int i=1;i<second.size();i++) {
-                if (i <= delta) {
-                    Collections.addAll(builder, split(second.get(i), builder.getCurrentPos()));
-                } else {
-                    builder.add(second.get(i));
-                }
-            }
-
-            while (builder.size() + 1 < first.size()) {
-                Comp cur = builder.getCurrentPos();
-                builder.add(new Path(1, cur.re, cur.im));
-            }
-
-            second = builder.build();
-        } else if (delta < 0) {
-            Segment.Builder builder = new Segment.Builder(first.getInitPos());
-            for (int i=1;i<first.size();i++) {
-                if (i <= -delta) {
-                    Collections.addAll(builder, split(first.get(i), builder.getCurrentPos()));
-                } else {
-                    builder.add(first.get(i));
-                }
-            }
-
-            while (builder.size() + 1 < second.size()) {
-                Comp cur = builder.getCurrentPos();
-                builder.add(new Path(1, cur.re, cur.im));
-            }
-
-            first = builder.build();
-        }
 
         int n = first.size();
         for (int i=0;i<n;i++) {

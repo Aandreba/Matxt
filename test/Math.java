@@ -1,5 +1,6 @@
 import org.matxt.Action.Transform;
 import org.matxt.Element.Body;
+import org.matxt.Element.LaTeX;
 import org.matxt.Element.Text;
 import org.matxt.Extra.Config;
 import org.matxt.Extra.StepFunction;
@@ -29,11 +30,11 @@ public class Math {
 
     public static void main (String... args) throws IOException {
         Config.setDuration(3f);
-        Text text = new Text(0, 0, "alpha", 36f, Color.WHITE);
+        LaTeX text = new LaTeX(0, 0, "f(x) = x^2 - 3x", 100f, Color.WHITE);
 
         Video video = new Video();
         video.add(text);
-        video.add(Transform.replace(text, Text.generateShape("beta", 36f), StepFunction.SMOOTH, 0, 0.9f));
+        video.add(Transform.replace(text, LaTeX.generateShape("f'(x) = 2x - 3", LaTeX.Align.Display), StepFunction.SMOOTH, 0, 0.9f));
         video.render(new File("replaceNew.mov"));
     }
 }

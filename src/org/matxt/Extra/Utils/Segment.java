@@ -19,7 +19,7 @@ public class Segment {
         }
 
         public Comp getCurrentPos () {
-            return get(size() - 1).getCompPoint();
+            return get(size() - 2).getCompPoint();
         }
 
         public Path add (int type, float... data) {
@@ -64,12 +64,11 @@ public class Segment {
     }
 
     public void split (int pos) {
-        int pm1 = pos - 1;
         Path path = get(pos);
-        Path[] split = ShapeUtils.split(path, get(pm1).getCompPoint());
+        Path[] split = ShapeUtils.split(path, get(pos - 1).getCompPoint());
 
-        this.paths.set(pos, split[1]);
-        this.paths.add(pm1, split[0]);
+        this.paths.set(pos, split[0]);
+        this.paths.add(pos + 1, split[0]);
     }
 
     protected Path add (int type, float... data) {
